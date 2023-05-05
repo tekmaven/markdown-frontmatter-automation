@@ -1,17 +1,26 @@
 import fs from 'fs';
 import matter from 'gray-matter';
-import { glob, globSync, globStream, globStreamSync, Glob } from 'glob'
+import { globSync } from 'glob';
 
 
 const isEsp32 = (fileContents) => {
-  return fileContents.indexOf("esp32:") > 0 || fileContents.indexOf("board: esp32") > 0
+  return fileContents.indexOf("esp32:") > 0 || fileContents.indexOf("platform: esp32") > 0
 };
 
 const isEsp8266 = (fileContents) => {
-  return fileContents.indexOf("esp32:") > 0 || fileContents.indexOf("board: esp32") > 0
+  return fileContents.indexOf("esp8266:") > 0 || fileContents.indexOf("platform: esp8266") > 0
 };
 
+const addToFrontMatter = (fileLines, lineSeperator, key, value) => {
+  const frontmatterSeperator = "---";
+  const endOfFrontmatter = fileLines.indexOf(frontmatterSeperator, fileLines.indexOf(frontmatterSeperator) + 1);
+  fileLines[endOfFrontmatter] = `${key}: ${value}${lineSeperator}${fileLines[endOfFrontmatter]}`;
+};
 
+const writeLinesToFile = (fileLines, lineSeperator, fullPath) => {
+  const newFile = fileLines.join(lineSeperator);
+  fs.writeFileSync(fullPath, newFile);
+};
 
 const mdFiles = globSync('/home/ryan/Projects/esphome-devices/src/docs/devices/**/*.md');
 mdFiles.forEach(fullPath => {
@@ -20,29 +29,35 @@ mdFiles.forEach(fullPath => {
   const frontmatter = matterResult.data;
 
   if(frontmatter.board) {
+    console.log(fullPath, "✅")
     return;
   }
 
   const lowerContent = matterResult.content.toLowerCase();
-  const fileLines = fileContents.split("\n");
-  const endOfFrontmatter = fileLines.indexOf("---", fileLines.indexOf("---") + 1);
-
-  if(lowerContent.indexOf("esp32") > 0 && lowerContent.indexOf("esp8266") > 0) {
-    console.log(fullPath, "???")
+  let lineSeperator = "\n";
+  let fileLines = fileContents.split(lineSeperator);
+  if(fileLines[0].indexOf("\r") > 0) {
+    lineSeperator = "\r\n";
+    fileLines = fileContents.split(lineSeperator);
   }
 
-  else if(lowerContent.indexOf("esp32") > 0) {
+  const isEsp32Board = isEsp32(lowerContent);
+  const isEsp8266Board = isEsp8266(lowerContent);
+  
+  if(isEsp32Board && isEsp8266Board) {
+    console.log(fullPath, "skipping, both")
+  }
+
+  else if(isEsp32Board) {
     console.log(fullPath, "esp32");
-    fileLines[endOfFrontmatter] = "board: esp32\n---";
-    const newFile = fileLines.join("\n");
-    fs.writeFileSync(fullPath, newFile);
+    addToFrontMatter(fileLines, lineSeperator, "board", "esp32");
+    writeLinesToFile(fileLines, lineSeperator, fullPath);
   }
 
-  else if(lowerContent.indexOf("esp8266") > 0) {
+  else if(isEsp8266Board) {
     console.log(fullPath, "esp8266");
-    fileLines[endOfFrontmatter] = "board: esp8266\n---";
-    const newFile = fileLines.join("\n");
-    fs.writeFileSync(fullPath, newFile);
+    addToFrontMatter(fileLines, lineSeperator, "board", "esp8266");
+    writeLinesToFile(fileLines, lineSeperator, fullPath);
   }
 
   else {
