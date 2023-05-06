@@ -5,11 +5,11 @@ import { globSync } from 'glob';
 const markdownSearchGlob = '/home/ryan/Projects/esphome-devices/src/docs/devices/**/*.md';
 
 const isEsp32 = (fileContents) => {
-  return fileContents.indexOf("esp32:") > 0 || fileContents.indexOf("platform: esp32") > 0
+  return fileContents.includes("esp32:") || fileContents.includes("platform: esp32")
 };
 
 const isEsp8266 = (fileContents) => {
-  return fileContents.indexOf("esp8266:") > 0 || fileContents.indexOf("platform: esp8266") > 0
+  return fileContents.includes("esp8266:") || fileContents.includes("platform: esp8266")
 };
 
 const addToFrontMatter = (fileLines, lineSeperator, key, value) => {
@@ -38,7 +38,7 @@ mdFiles.forEach(fullPath => {
   const lowerContent = matterResult.content.toLowerCase();
   let lineSeperator = "\n";
   let fileLines = fileContents.split(lineSeperator);
-  if(fileLines[0].indexOf("\r") > 0) {
+  if(fileLines[0].includes("\r")) {
     lineSeperator = "\r\n";
     fileLines = fileContents.split(lineSeperator);
   }
