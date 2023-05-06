@@ -2,6 +2,7 @@ import fs from 'fs';
 import matter from 'gray-matter';
 import { globSync } from 'glob';
 
+const markdownSearchGlob = '/home/ryan/Projects/esphome-devices/src/docs/devices/**/*.md';
 
 const isEsp32 = (fileContents) => {
   return fileContents.indexOf("esp32:") > 0 || fileContents.indexOf("platform: esp32") > 0
@@ -22,7 +23,8 @@ const writeLinesToFile = (fileLines, lineSeperator, fullPath) => {
   fs.writeFileSync(fullPath, newFile);
 };
 
-const mdFiles = globSync('/home/ryan/Projects/esphome-devices/src/docs/devices/**/*.md');
+const mdFiles = globSync(markdownSearchGlob);
+
 mdFiles.forEach(fullPath => {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const matterResult = matter(fileContents);
